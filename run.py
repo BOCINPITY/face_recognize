@@ -50,6 +50,7 @@ def get_face_data():
     image_encoding_content = []
     if all_users:
         for user in all_users:
+            # id=
             name = user["name"]
             encoding = pickle.loads(user["encoding"])
             name_content.append(name)
@@ -58,7 +59,7 @@ def get_face_data():
     return name_content, image_encoding_content
 
 # 人脸识别
-async def face_recognitions(data_base_image, frame, websocket):
+async def face_recognitions(data_base_image, frame, websocket,face_count):
     face_locations = face_recognition.face_locations(frame)
     face_encodings = face_recognition.face_encodings(frame, face_locations)
 
@@ -67,8 +68,19 @@ async def face_recognitions(data_base_image, frame, websocket):
         if True in results:
             index = results.index(True)
             names = data_base_image[0][index]
-            print(f"人脸验证成功,身份是{names}")
-            await websocket.send(f"人脸验证成功,身份是{names}")
+            if names in face_count:
+                face_count[names] += 1
+                print(face_count[names])
+            else:
+                face_count[names] = 1
+
+                # 当某个人脸的计数达到8次时，发送websocket请求到前端服务器
+            if face_count[names] >= 8:
+                print("发送数据" + str(names))
+                await websocket.send(str(names))
+                face_count[names] = 0  # 重置该人脸的计数
+
+
             for (top, right, bottom, left) in face_locations:
                 cv.putText(frame, names, (left, top - 10), cv.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2)
                 cv.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
@@ -81,13 +93,14 @@ async def face_recognitions(data_base_image, frame, websocket):
 async def process_video(video_capture, tuple_data, websocket):
     frame_interval = 10  # 每10帧处理一次
     frame_count = 0
+    face_count={}
     while True:
         ret, frame = video_capture.read()
         if not ret:
             break
         frame_count += 1
         if frame_count % frame_interval == 0:
-            await face_recognitions(tuple_data, frame, websocket)
+            await face_recognitions(tuple_data, frame, websocket,face_count)
         if cv.waitKey(1) & 0xFF == ord('q'):
             break
     video_capture.release()
