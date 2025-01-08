@@ -50,7 +50,7 @@ def get_face_data():
     image_encoding_content = []
     if all_users:
         for user in all_users:
-            # id=
+            id=user["id"]
             name = user["name"]
             encoding = pickle.loads(user["encoding"])
             name_content.append(name)
