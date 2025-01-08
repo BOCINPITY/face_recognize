@@ -4,3 +4,4 @@ face_recognition
 flask
 pymysql
 cryptography
+websocket

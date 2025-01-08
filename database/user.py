@@ -51,7 +51,7 @@ class User:
         if connection:
             try:
                 cursor = connection.cursor(pymysql.cursors.DictCursor)
-                sql = "SELECT username, name, encoding FROM users"
+                sql = "SELECT id,username, name, encoding FROM users"
                 cursor.execute(sql)
                 results = cursor.fetchall()
                 cursor.close()

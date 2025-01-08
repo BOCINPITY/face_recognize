@@ -1,7 +1,6 @@
 from flask import Flask, request, jsonify
 from database.user import User
 import face_recognition
-import pickle
 app = Flask(__name__)
 
 
@@ -11,7 +10,6 @@ def register():
     username = request.form.get('username')
     password = request.form.get('password')
     name = request.form.get('name')
-    # print(username,password)
 
     # 检查必填字段是否存在
     if not username or not password:
@@ -46,13 +44,6 @@ def get_user(user_id):
 
 @app.route('/')
 def index():
-    # user = User()
-    # all_users = user.get_all_users()  # 假设这个方法获取所有用户记录
-    # if all_users:
-    #     for user in all_users:
-    #         name = user["name"]
-    #         encoding = pickle.loads(user["encoding"])
-    #         print(name + '\n',encoding)
 
     return 'api list:\
         <ul>\
