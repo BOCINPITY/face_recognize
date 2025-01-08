@@ -8,24 +8,6 @@ from database.user import User
 import asyncio
 import websockets
 
-# 将识别到的人脸绘制出来
-def print_image(face, image):
-    for face_location in face:
-        top, right, bottom, left = face_location
-        face_image = image[top:bottom, left:right]
-        pil_image = Image.fromarray(face_image)
-        pil_image.show()
-
-def print_image_tru(images, image_list):
-    image = cv.imread(images)
-    for one in image_list:
-        y1 = one[0]
-        x1 = one[3]
-        y2 = one[2]
-        x2 = one[1]
-        cv.rectangle(image, (x1, y1), (x2, y2), (0, 0, 255), 2)
-    cv.imshow("fff", image)
-    cv.waitKey()
 
 # 加载缓存的人脸数据特征值
 def load_face_data_cache():
@@ -35,6 +17,7 @@ def load_face_data_cache():
             data = pickle.load(f)
         return data
     return None
+
 
 # 保存人脸数据特征值到缓存
 def save_face_data_cache(data):
