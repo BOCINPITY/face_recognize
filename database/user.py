@@ -6,13 +6,13 @@ class User:
     def __init__(self):
         self.db_conn = DatabaseConnection()
 
-    def register(self, username, password, encoding, name):
+    def register(self, phone, password, encoding, name):
         connection = self.db_conn.connect()
         if connection:
             try:
                 cursor = connection.cursor()
-                sql = "INSERT INTO users (username, password, encoding,name) VALUES (%s, %s, %s,%s)"
-                cursor.execute(sql, (username, password, pickle.dumps(encoding), name))
+                sql = "INSERT INTO users (phone, password, encoding,name) VALUES (%s, %s, %s,%s)"
+                cursor.execute(sql, (phone, password, pickle.dumps(encoding), name))
                 connection.commit()
                 cursor.close()
                 connection.close()
@@ -35,7 +35,7 @@ class User:
                 if result:
                     user_info = {
                         "id":  result["id"],
-                        "username": result["username"],
+                        "phone": result["phone"],
                         "password": result["password"],
                         "account": result["account"],
                         "encoding": pickle.loads(result["encoding"]) if result["encoding"] else None
@@ -51,7 +51,7 @@ class User:
         if connection:
             try:
                 cursor = connection.cursor(pymysql.cursors.DictCursor)
-                sql = "SELECT id,username, name, encoding FROM users"
+                sql = "SELECT * FROM users"
                 cursor.execute(sql)
                 results = cursor.fetchall()
                 cursor.close()
