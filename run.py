@@ -6,7 +6,6 @@ import pickle
 import threading
 
 from database.Redis import get_face_data_from_redis
-from database.user import User
 import asyncio
 import websockets
 import json

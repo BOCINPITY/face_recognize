@@ -1,11 +1,11 @@
 import numpy as np
 import redis
-from database.UserService import UserService  # 使用绝对导入
+from .UserService import UserService #相对导入
 
 # 连接Redis
 def conRedis():
     # 注意这里将decode_responses设置为False
-    redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=False)
+    redis_client = redis.Redis(host='localhost', port=6380, db=0, decode_responses=False)
     return redis_client
 
 def cache_use_redis():
@@ -68,9 +68,9 @@ def get_face_data_from_redis():
 
 if __name__ == "__main__":
     cache_use_redis()
-    # ids, names, phones, accounts, encodings = get_face_data_from_redis()
-    # print("IDs:", ids)
-    # print("Names:", names)
-    # print("Phones:", phones)
-    # print("Accounts:", accounts)
-    # print("Encodings:", encodings)
+    ids, names, phones, accounts, encodings = get_face_data_from_redis()
+    print("IDs:", ids)
+    print("Names:", names)
+    print("Phones:", phones)
+    print("Accounts:", accounts)
+    print("Encodings:", encodings)

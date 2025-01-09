@@ -1,10 +1,29 @@
-from flask import Flask, request, jsonify
+from decimal import Decimal
 
+from flask import Flask, request, jsonify
+from database.DishService import DishService
 from database.Redis import cache_use_redis
 from database.UserService import UserService
-from database.DaoUser import User
 import face_recognition
 app = Flask(__name__)
+
+
+@app.route('/api/fish/<int:fish_id>', methods=['GET'])
+def get_fish(fish_id):
+    service = DishService()
+    dish = service.get_dish_by_id(fish_id)
+
+    if dish:
+        # 假设 dish 是一个 Dish 类的实例
+        dish_dict = {
+            'id': dish.id,
+            'cname': dish.cname,
+            'price': str(dish.price)  # 将 decimal 转换为字符串
+            # 添加其他需要的字段
+        }
+        return jsonify(dish_dict), 200
+
+    return jsonify({"message": "Dish not found"}), 404
 
 @app.route('/api/register', methods=['POST'])
 def register():
