@@ -8,7 +8,30 @@ from database.user import User
 import asyncio
 import websockets
 import json
+import redis
 from decimal import Decimal
+
+# 连接redis
+redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
+
+# myslq缓存redis
+def cacheUseRedis():
+    user = User()
+    all_users = user.get_all_users()
+    if all_users:
+        for user_data in all_users:
+            user_id = user_data["id"]
+            redis_client.set(user_id, user_data["name"])
+            # 将 encoding 转换为字符串，以便存储到 Redis 中
+            # encoding_str = pickle.dumps(user_data["encoding"]).hex()
+            # 使用 hset 将用户数据存储为一个 Hash
+            # redis_client.hset(f"user:{user_id}", mapping={
+            #     "name": user_data["name"],
+            #     "id": user_data["id"],
+            #     "phone": user_data["phone"],
+            #     "account": user_data["account"],
+            #     "encoding": encoding_str
+            # })
 
 
 # 将目录中的图片加载到已知人脸库中
@@ -96,8 +119,10 @@ async def process_video(video_capture, tuple_data, websocket):
     cv.destroyAllWindows()
 
 # WebSocket 服务器处理函数
-async def handle_client(websocket, path):
+async def handle_client(websocket):
     video_capture = cv.VideoCapture(0)
+    cacheUseRedis()
+    print(redis_client.keys())
     tuple_data = get_face_data()
     await process_video(video_capture, tuple_data, websocket)
 
