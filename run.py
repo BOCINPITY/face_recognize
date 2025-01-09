@@ -4,78 +4,41 @@ from PIL import Image
 import face_recognition
 import pickle
 import threading
+
+from database.Redis import get_face_data_from_redis
 from database.user import User
 import asyncio
 import websockets
 import json
-import redis
-from decimal import Decimal
 
-# 连接redis
-redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
-
-# myslq缓存redis
-def cacheUseRedis():
-    user = User()
-    all_users = user.get_all_users()
-    if all_users:
-        for user_data in all_users:
-            user_id = user_data["id"]
-            redis_client.set(user_id, user_data["name"])
-            # 将 encoding 转换为字符串，以便存储到 Redis 中
-            # encoding_str = pickle.dumps(user_data["encoding"]).hex()
-            # 使用 hset 将用户数据存储为一个 Hash
-            # redis_client.hset(f"user:{user_id}", mapping={
-            #     "name": user_data["name"],
-            #     "id": user_data["id"],
-            #     "phone": user_data["phone"],
-            #     "account": user_data["account"],
-            #     "encoding": encoding_str
-            # })
-
-
-# 将目录中的图片加载到已知人脸库中
-def get_face_data():
-    user = User()
-    all_users = user.get_all_users()  # 假设这个方法获取所有用户记录
-    name_content = []
-    image_encoding_content = []
-    id_content = []
-    phone_content = []
-    account_content = []
-    if all_users:
-        for user in all_users:
-            id=user["id"]
-            phone=user["phone"]
-            name = user["name"]
-            account=user["account"]
-            encoding = pickle.loads(user["encoding"])
-            name_content.append(name)
-            image_encoding_content.append(encoding)
-            id_content.append(id)
-            phone_content.append(phone)
-            account_content.append(account)
-
-    # print(name_content)
-    return name_content, image_encoding_content, id_content, phone_content, account_content
 
 # 人脸识别
-async def face_recognitions(data_base_image, frame, websocket,face_count):
+async def face_recognitions( frame, websocket,face_count):
     face_locations = face_recognition.face_locations(frame)
     face_encodings = face_recognition.face_encodings(frame, face_locations)
-
+    tuple_data=get_face_data_from_redis()
     for face_encoding in face_encodings:
-        results = face_recognition.compare_faces(data_base_image[1], face_encoding)
+        results = face_recognition.compare_faces(tuple_data[4], face_encoding)
         if True in results:
             index = results.index(True)
-            names = data_base_image[0][index]
-            id = data_base_image[2][index]
-            phone_number = data_base_image[3][index]
-            account = data_base_image[4][index]
+            names = tuple_data[1][index]
+            id = tuple_data[0][index]
+            #解码id并提取数字
+            id_str = id.decode('utf-8')  # 将字节串解码为字符串
+            id_number_str = id_str.split(':')[1]  # 使用冒号 ':' 分割字符串，并获取第二部分，即数字部分
+            id_number = int(id_number_str)  # 将数字字符串转换为整数类型
+            phone_number = tuple_data[2][index]
+            account = tuple_data[3][index]
             account_str = str(account)
+
+            # print(names)
+            # print(id_number)
+            # print(phone_number)
+            # print(account_str)
+
             data_dict = {
                 "name": names,
-                "id": id,
+                "id": id_number,
                 "phone_number": phone_number,
                 "account": account_str
             }
@@ -102,7 +65,7 @@ async def face_recognitions(data_base_image, frame, websocket,face_count):
     cv.imshow('Video', frame)
 
 # 新的视频处理函数，每隔几帧处理一次人脸识别
-async def process_video(video_capture, tuple_data, websocket):
+async def process_video(video_capture, websocket):
     frame_interval = 10  # 每10帧处理一次
     frame_count = 0
     face_count={}
@@ -112,7 +75,7 @@ async def process_video(video_capture, tuple_data, websocket):
             break
         frame_count += 1
         if frame_count % frame_interval == 0:
-            await face_recognitions(tuple_data, frame, websocket,face_count)
+            await face_recognitions( frame, websocket,face_count)
         if cv.waitKey(1) & 0xFF == ord('q'):
             break
     video_capture.release()
@@ -121,10 +84,7 @@ async def process_video(video_capture, tuple_data, websocket):
 # WebSocket 服务器处理函数
 async def handle_client(websocket):
     video_capture = cv.VideoCapture(0)
-    cacheUseRedis()
-    print(redis_client.keys())
-    tuple_data = get_face_data()
-    await process_video(video_capture, tuple_data, websocket)
+    await process_video(video_capture, websocket)
 
 # 启动 WebSocket 服务器
 async def start_server():

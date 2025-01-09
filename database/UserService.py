@@ -1,5 +1,5 @@
-from DaoUser import User
-from db import  DatabaseConnection
+from database.DaoUser import User
+from database.db import  DatabaseConnection
 import pymysql
 import pickle
 
@@ -39,7 +39,8 @@ class UserService:
                         phone=result["phone"],
                         password=result["password"],
                         encoding=pickle.loads(result["encoding"]) if result["encoding"] else None,
-                        name=result["name"]
+                        name=result["name"],
+                        account=result["account"]
                     )
                     return user
                 return None
@@ -65,7 +66,8 @@ class UserService:
                         phone=result["phone"],
                         password=result["password"],
                         encoding=pickle.loads(result["encoding"]) if result["encoding"] else None,
-                        name=result["name"]
+                        name=result["name"],
+                        account=result["account"]
                     )
                     users.append(user)
                 return users
