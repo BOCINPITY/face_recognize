@@ -1,5 +1,6 @@
 from database.DaoUser import User
 from database.db import  DatabaseConnection
+
 import pymysql
 import pickle
 
@@ -17,6 +18,7 @@ class UserService:
                 connection.commit()
                 cursor.close()
                 connection.close()
+
                 return True
             except pymysql.Error as e:
                 print(f"错误,插入用户数据失败: {e}")
