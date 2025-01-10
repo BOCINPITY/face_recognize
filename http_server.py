@@ -1,6 +1,6 @@
 from decimal import Decimal
-
-from flask import Flask, request, jsonify
+from database.DaoUser import User
+from flask import Flask, request, jsonify, json
 from database.DishService import DishService
 from database.Redis import cache_use_redis
 from database.UserService import UserService
@@ -35,7 +35,6 @@ def register():
     # 检查必填字段是否存在
     if not phone or not password:
         return jsonify({"message": "phone and password are required"}), 400
-
     # 获取上传的照片
     photo = request.files.get('photo')
     if photo is None:
@@ -62,6 +61,57 @@ def get_user(user_id):
         return jsonify(result), 200
     return jsonify({"message": "User not found"}), 404
 
+#用户支付接口
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+
+from decimal import Decimal
+
+@app.route("/api/orderPay", methods=['POST'])
+def order_pay():
+    # 检查请求中是否有 JSON 数据
+    total_price = Decimal(0)  # 初始化为 Decimal 类型
+    if request.is_json:
+        # 获取 JSON 数据
+        data = request.get_json()
+        userId = data.get('userId')
+        dishList = data.get('dishList', [])
+        for item in dishList:
+            price = Decimal(item.get('price'))  # 转换为 Decimal
+            num = item.get('num')
+            total_price += price * num
+        total_price = round(total_price, 2)
+        service = UserService()
+        user = service.get_user_by_id(userId)
+        print(user)
+        if total_price > user.account:
+            return jsonify({"message": "余额不足", "account": float(user.account)}), 200
+        else:
+            current_account = user.account - total_price
+            user.account = current_account
+            service.update_user_account(userId, current_account)
+            response_data = {
+                "phone": user.phone,
+                "orderId": "",
+                "orderdetails": [
+                    {
+                        "dishName": "西餐",
+                        "num": item.get('num'),
+                        "price": item.get('price'),
+                        "payStatus": True
+                    } for item in dishList
+                ],
+                "payStatus": True
+            }
+            return jsonify(response_data), 200
+    else:
+        # 如果请求体不是 JSON 格式，返回错误
+        return jsonify({"error": "Request body must be JSON"}), 400
+
+if __name__ == "__main__":
+    app.run(debug=True)
 
 @app.route('/')
 def index():

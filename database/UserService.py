@@ -80,3 +80,21 @@ class UserService:
         else:
             print("数据库连接失败")
             return []
+
+
+    def update_user_account(self, user_id, new_account):
+        connection = self.db_conn.connect()
+        if connection:
+            try:
+                cursor = connection.cursor()
+                # 假设 user_id 是用户的唯一标识字段，用于定位要更新的记录
+                sql = "UPDATE users SET account = %s WHERE id = %s"
+                cursor.execute(sql, (new_account, user_id))
+                connection.commit()
+                cursor.close()
+                connection.close()
+                return True
+            except pymysql.Error as e:
+                print(f"错误，更新用户账号失败: {e}")
+                return False
+        return False
